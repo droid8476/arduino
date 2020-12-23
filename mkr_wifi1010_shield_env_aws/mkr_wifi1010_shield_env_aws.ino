@@ -23,7 +23,7 @@ const char pass[]           = SECRET_PASS;
 const char aws_endpoint[]   = AWS_ENDPOINT;
 const char* certificate     = SECRET_CERTIFICATE;
 
-const char mqttid[]      = "ARDUINO_MKR1010";  
+const char mqttid[]      = "ARDUINO_MKR1010";
 
 WiFiClient    wifiClient;            // Used for the TCP socket connection
 BearSSLClient sslClient(wifiClient); // Used for SSL/TLS connection, integrates with ECC508
@@ -32,26 +32,26 @@ MqttClient    mqttClient(sslClient);
 unsigned long lastMillis = 0;
 
 void setup() {
-  int cont=0;
-  
+  int cont = 0;
+
   // initialize digital pin LED_BUILTIN as an output.
   WiFiDrv::pinMode(GREEN, OUTPUT);
   WiFiDrv::pinMode(RED, OUTPUT);
   WiFiDrv::pinMode(BLUE, OUTPUT);
 
   blinkProgress(3);
-  
-  while(!Serial && cont<SERIAL_RETRY){
-      Serial.begin(115200);
-      blinkError(1);
-      cont = cont +1;
+
+  while (!Serial && cont < SERIAL_RETRY) {
+    Serial.begin(115200);
+    blinkError(1);
+    cont = cont + 1;
   }
   blinkProgress(1);
 
   if (!ENV.begin()) {
     Serial.println("Failed to initialize MKR ENV shield!");
-    blinkError(3);        
-    while(1);
+    blinkError(3);
+    while (1);
   }
   blinkProgress(1);
 
@@ -66,7 +66,7 @@ void setup() {
   // used to validate the servers certificate
   ArduinoBearSSL.onGetTime(getTime);
   blinkProgress(1);
-  
+
   // Set the ECCX08 slot to use for the private key
   // and the accompanying public certificate for it
   sslClient.setEccSlot(0, certificate);
@@ -74,7 +74,7 @@ void setup() {
 
   rtc.begin();
   rtc.setEpoch(WiFi.getTime());
-  
+
   // Optional, set the client id used for MQTT,
   // each device that is connected to the broker
   // must have a unique client id. The MQTTClient will generate
@@ -119,8 +119,8 @@ void loop() {
   float uvIndex     = ENV.readUVIndex();
 
   rtc.setEpoch(getTime());
-  sprintf(date_telemetry,"%.2d-%.2d-%.d",rtc.getDay(),rtc.getMonth(),rtc.getYear());
-  sprintf(time_telemetry,"%.2d:%.2d:%.2d",(rtc.getHours() + GMT),rtc.getMinutes(),rtc.getSeconds());
+  sprintf(date_telemetry, "%.2d-%.2d-%.d", rtc.getDay(), rtc.getMonth(), rtc.getYear());
+  sprintf(time_telemetry, "%.2d:%.2d:%.2d", (rtc.getHours() + GMT), rtc.getMinutes(), rtc.getSeconds());
   sdate_telemetry = date_telemetry;
   stime_telemetry = time_telemetry;
   // print each of the sensor values
@@ -138,27 +138,27 @@ void loop() {
   Serial.print(pos_elevation);
   Serial.println("m");
   Serial.print("Temperature = ");
-  Serial.print(temperature,2);
+  Serial.print(temperature, 2);
   Serial.println("°C");
   Serial.print("Humidity    = ");
-  Serial.print(humidity,2);
+  Serial.print(humidity, 2);
   Serial.println("%");
   Serial.print("Pressure    = ");
-  Serial.print(pressure*10,1);
+  Serial.print(pressure * 10, 1);
   Serial.println("kPa");
   Serial.print("Illuminance = ");
-  Serial.print(illuminance,2);
+  Serial.print(illuminance, 2);
   Serial.println("lx");
   Serial.print("UVA         = ");
-  Serial.println(uva,2);
+  Serial.println(uva, 2);
   Serial.print("UVB         = ");
-  Serial.println(uvb,2);
+  Serial.println(uvb, 2);
   Serial.print("UV Index    = ");
-  Serial.println(uvIndex,2);
+  Serial.println(uvIndex, 2);
   Serial.println();
 
   // Publist to AWS the sensors values
-  publishMessage(date_telemetry,time_telemetry,pos_latitude,pos_longitude,pos_elevation,temperature,humidity,pressure,illuminance,uva,uvb,uvIndex);
+  publishMessage(date_telemetry, time_telemetry, pos_latitude, pos_longitude, pos_elevation, temperature, humidity, pressure, illuminance, uva, uvb, uvIndex);
   blinkOK(3);
 
   // wait to read sensors again
@@ -166,7 +166,7 @@ void loop() {
 }
 
 unsigned long getTime() {
-  // get the current time from the WiFi module  
+  // get the current time from the WiFi module
   return WiFi.getTime();
 }
 
@@ -174,14 +174,14 @@ void connectWiFi() {
   Serial.print("Attempting to connect to SSID: ");
   Serial.print(ssid);
   Serial.print(" ");
-  
+
   while (WiFi.begin(ssid, pass) != WL_CONNECTED) {
     // failed, retry
     Serial.print(".");
     blinkError(3);
     delay(5000);
   }
-  
+
   Serial.println();
   Serial.println("You're connected to the network");
   Serial.println();
@@ -209,7 +209,7 @@ void connectMQTT() {
   blinkOK(1);
 }
 
-void publishMessage(String date_telemetry, String time_telemetry,String pos_latitude, String pos_longitude, int pos_elevation,float temperature, float humidity, float pressure, float illuminance, float uva, float uvb, float uvIndex) {
+void publishMessage(String date_telemetry, String time_telemetry, String pos_latitude, String pos_longitude, int pos_elevation, float temperature, float humidity, float pressure, float illuminance, float uva, float uvb, float uvIndex) {
   Serial.println("Creating JSON");
   JSONVar myJSONobject;
 
@@ -251,56 +251,56 @@ void onMessageReceived(int messageSize) {
   Serial.println();
 }
 
-void waitReadValues(){
+void waitReadValues() {
   unsigned long time_now = millis();
 
-  while(millis() < time_now + READ_SENSORS){
+  while (millis() < time_now + READ_SENSORS) {
     if (WiFi.status() != WL_CONNECTED) {
       blinkError(1);
-    }else{
+    } else {
       blinkOK(1);
     }
   }
 }
 
-void blinkError(int num){
+void blinkError(int num) {
   WiFiDrv::digitalWrite(RED, LOW);
   WiFiDrv::digitalWrite(GREEN, LOW);
   WiFiDrv::digitalWrite(BLUE, LOW);
-  for(int i=0; i<num; i++)
+  for (int i = 0; i < num; i++)
   {
-    WiFiDrv::digitalWrite(RED, HIGH);     
-    delay(500);                           
-    WiFiDrv::digitalWrite(RED, LOW);      
-    delay(500);                           
+    WiFiDrv::digitalWrite(RED, HIGH);
+    delay(500);
+    WiFiDrv::digitalWrite(RED, LOW);
+    delay(500);
   }
   WiFiDrv::digitalWrite(RED, HIGH);
- 
+
 }
 
-void blinkOK(int num){
+void blinkOK(int num) {
   WiFiDrv::digitalWrite(RED, LOW);
   WiFiDrv::digitalWrite(GREEN, LOW);
   WiFiDrv::digitalWrite(BLUE, LOW);
-  for(int i=0; i<num; i++)
+  for (int i = 0; i < num; i++)
   {
-    WiFiDrv::digitalWrite(GREEN, HIGH);    
-    delay(500);                            
-    WiFiDrv::digitalWrite(GREEN, LOW);     
-    delay(500);                            
+    WiFiDrv::digitalWrite(GREEN, HIGH);
+    delay(500);
+    WiFiDrv::digitalWrite(GREEN, LOW);
+    delay(500);
   }
   WiFiDrv::digitalWrite(GREEN, HIGH);
 }
 
-void blinkProgress(int num){
+void blinkProgress(int num) {
   WiFiDrv::digitalWrite(RED, LOW);
   WiFiDrv::digitalWrite(GREEN, LOW);
   WiFiDrv::digitalWrite(BLUE, LOW);
-  for(int i=0; i<num; i++)
+  for (int i = 0; i < num; i++)
   {
-    WiFiDrv::digitalWrite(BLUE, HIGH);      
-    delay(500);                             
-    WiFiDrv::digitalWrite(BLUE, LOW);       
-    delay(500);                             
+    WiFiDrv::digitalWrite(BLUE, HIGH);
+    delay(500);
+    WiFiDrv::digitalWrite(BLUE, LOW);
+    delay(500);
   }
 }
